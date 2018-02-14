@@ -53,7 +53,7 @@ while (toc <= tmax)
         
 %         //index = find((data_std - data)>20);
         if ~isempty(data_std)
-            index = find((data./data_std)<Dth); 
+            index = find((data./data_std)<Dth);
         end
 /////////////////////////////
 %         index = find(data<40);
