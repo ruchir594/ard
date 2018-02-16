@@ -3,7 +3,8 @@ int j=0;
 int count=0;
 int data[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
 int data_std[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
-float Dth = 0.5;
+//float Dth = 0.5;
+float Dth[12] = {0.816814159292035,0.601501501501502,0.724624624624625,0.572560975609756,0.789552238805970,0.575609756097561,0.732530120481928,0.559214501510574,0.865217391304348,0.523312883435583,0.666765578635015,0.530722891566265};
 float dth = 0.1;
 bool updateflag = true;
 bool localflag;
@@ -95,7 +96,7 @@ void loop() {
     localflag = false;
     for (j=0; j<12; j++){
       //Serial.println(data[j]);
-      if (((float)data[j]/(float) data_std[j]) < Dth) {
+      if (((float)data[j]/(float) data_std[j]) < Dth[j]) {
         //Serial.println("prediction");
         Serial.println(j);
         localflag = true;
