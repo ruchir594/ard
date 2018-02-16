@@ -5,6 +5,8 @@ int data[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
 int data_std[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
 float Dth = 0.5;
 float dth = 0.1;
+bool updateflag = true;
+bool localflag;
 
 void setup() {
   // put your setup code here, to run once:
@@ -82,7 +84,7 @@ void loop() {
 
   // dont update when we gotta put a finger on it
 
-  if (count % 200 == 1 and data[11] != 0){
+  if (count % 200 == 1 and data[11] != 0 and updateflag == true){
     for (j=0; j<12; j++){
       data_std[j] = data[j];
     }
@@ -90,14 +92,22 @@ void loop() {
   }
   
   if (data_std[11] != 0 and i == 11) {
+    localflag = false;
     for (j=0; j<12; j++){
       //Serial.println(data[j]);
       if (((float)data[j]/(float) data_std[j]) < Dth) {
         //Serial.println("prediction");
         Serial.println(j);
+        localflag = true;
         //break;
       }
     }
+    if (localflag == true){
+      updateflag = false;
+    } else {
+      updateflag = true;
+    }
+
   }
   count = count + 1;
   //Serial.println(count);
