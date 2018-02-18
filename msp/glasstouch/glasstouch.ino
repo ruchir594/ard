@@ -9,6 +9,8 @@ float dth = 0.1;
 bool updateflag = true;
 bool localflag;
 
+// dont use 10
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
