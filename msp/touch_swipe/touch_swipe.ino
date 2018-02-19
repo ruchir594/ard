@@ -12,10 +12,18 @@ int data_f_start[12] = {0};
 int data_r_end[12] = {0};
 int data_fall_start = 0;
 int data_rise_end = 0;
-bool updateflag = true;
-bool localflag;
 int Dth = 100;
 
+// initialized for touch sensor
+float touch_Dth[12] = {0.816814159292035,0.601501501501502,0.724624624624625,0.572560975609756,0.789552238805970,0.575609756097561,0.732530120481928,0.559214501510574,0.865217391304348,0.523312883435583,0.666765578635015,0.530722891566265};
+bool touch_updateflag = true;
+bool touch_localflag;
+int touch_data[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
+int touch_data_std[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
+int touch_count = 0;
+
+// temp
+int temp = 0;
 
 // dont use C9
 
@@ -106,11 +114,47 @@ void loop() {
     digitalWrite(2, 0); // MSB
   }
   delay(8);
-  data[ix+ 12*count] = analogRead(A1);
+  temp = analogRead(A1);
+  data[ix+ 12*count] = temp;
+  touch_data[ix] = temp;
   //Serial.println(data[ix + 12*count]);
   if (ix == 11){
     count += 1;
   }
+  // ------------
+  // TOUCH CODE
+  // ------------
+  // dont update when we gotta put a finger on it
+
+  if (touch_count % 50 == 1 and touch_data[11] != 0 and touch_updateflag == true){
+    for (j=0; j<12; j++){
+      touch_data_std[j] = touch_data[j];
+    }
+    Serial.println("updated touch_data_std");
+  }
+  
+  if (touch_data_std[11] != 0 and ix == 11) {
+    touch_localflag = false;
+    for (j=0; j<12; j++){
+      //Serial.println(data[j]);
+      if (((float)touch_data[j]/(float) touch_data_std[j]) < touch_Dth[j]) {
+        //Serial.println("prediction");
+        Serial.println(j);
+        touch_localflag = true;
+        //break;
+      }
+    }
+    if (touch_localflag == true){
+      touch_updateflag = false;
+    } else {
+      touch_updateflag = true;
+    }
+
+  }
+  touch_count = touch_count + 1;
+  // ------------
+  // SWIPE CODE
+  // ------------
   if (count == data_segments){
     count = 0;
     //Serial.println("got 30 -> now processing");
@@ -142,8 +186,8 @@ void loop() {
       data_rise_end += data_r_end[j] - data_r_end[j-1];
     }
     // compare rest 
-    Serial.println(data_fall_start);
-    Serial.println(data_rise_end);
+    //Serial.println(data_fall_start);
+    //Serial.println(data_rise_end);
     if (data_fall_start<0 && data_rise_end<0){
       Serial.println("directiom guess: ");
       Serial.print(" 0");
