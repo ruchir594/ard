@@ -14,7 +14,7 @@ int data_fall_start = 0;
 int data_rise_end = 0;
 bool updateflag = true;
 bool localflag;
-int Dth = 100;
+int Dth = 8;
 
 
 // dont use C9
@@ -22,7 +22,7 @@ int Dth = 100;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  analogReadResolution(14);
+  //analogReadResolution(14);
   pinMode(2, OUTPUT); // MSB 
   pinMode(3, OUTPUT); 
   pinMode(4, OUTPUT); 
