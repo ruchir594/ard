@@ -3,24 +3,30 @@ int j=0;
 int k=0;
 int ix=0;
 int count=0;
-int data_segments = 200;
-const int total_data_points = 12*data_segments;
-const int diff_data_points = 12*(data_segments-1);
-int data[2400] = {0};
-int diff_data[2376] = {0};
-int data_f_start[12] = {0};
-int data_r_end[12] = {0};
-int data_fall_start = 0;
-int data_rise_end = 0;
+
 bool updateflag = true;
 bool localflag;
 int Dth = 150;
 float sd;
 
+int current[12] = {0};
+int data[1200] = {0};
+
 int supercount = 0;
 
+// Stable Region Tweaker
+float drop_percentage = 0.75; 
 
-// dont use C9
+// Swipe Count Reference
+int scr = -1;
+int temp_segment_blast = 0;
+String last = "prediction right swipe movement";
+int scr_cnt = 0;
+int blast_cnt = 0;
+
+// -----------------------------------
+// dont use C9 // see physical circuit
+// -----------------------------------
 
 void setup() {
   // put your setup code here, to run once:
@@ -38,8 +44,6 @@ void setup() {
   digitalWrite(3, 0); 
   digitalWrite(2, 0); // MSB
   digitalWrite(6, 0); // 0 to enable
-
-  
 
 }
 
@@ -109,111 +113,124 @@ void loop() {
     digitalWrite(2, 0); // MSB
   }
   delay(1);
-  data[ix+ 12*count] = analogRead(A1);
-  //Serial.println(data[ix + 12*count]);
+  current[ix] = analogRead(A1);
+  //Serial.println("-----------");
+  //Serial.println(ix);
+  //Serial.println(current[ix]);
+  
+  
   if (ix == 11){
     count += 1;
-  }
-  if (count == data_segments){
-    count = 0;
-    supercount += 1;
-    //Serial.println("got 30 -> now processing");
-    // do MATLAB code processing
-    // calculate diff(data)
-    for (j=2; j<data_segments; ++j){
-      for (k=0; k<12; ++k){
-        diff_data[(j-2)*12 + k] = data[j*12 + k] - data[(j-2)*12 + k];
-        //Serial.println(diff_data[(j-1)*12 + k]);
+    temp_segment_blast = find_stable_segment(current);
+    //Serial.println("~~~~~~");
+    //    for (int i=0; i<12; i++){
+    //      Serial.println(current[i]);
+    //    }
+    //Serial.println(temp_segment_blast);
+  
+    if (temp_segment_blast == -1){
+      // do nothing 
+      scr = -1;
+      scr_cnt = 0;
+      blast_cnt = 0;
+    } else {
+      if (scr == -1) {
+        // set scr for first segment
+        scr = temp_segment_blast;
+        scr_cnt = 0;
+        blast_cnt = 0;
+      } else {
+        // predict for subsequent segment
+        if (temp_segment_blast < scr) {
+          Serial.println(scr);
+          Serial.println(temp_segment_blast);
+          last = "prediction left swipe movement";
+          scr_cnt += 1;
+          blast_cnt += scr - temp_segment_blast;
+          
+        } 
+        if (temp_segment_blast > scr) {
+          Serial.println(scr);
+          Serial.println(temp_segment_blast);
+          last = "prediction right swipe movement";
+          scr_cnt += 1;
+          blast_cnt -= temp_segment_blast - scr;
+        }
+        scr = temp_segment_blast;
+        //Serial.println("**~~~~~");
+        //for (int i=0; i<12; i++){
+        //  Serial.println(current[i]);
+        // }
+        //Serial.println("j");
+        //Serial.println(temp_segment_blast);
+        if (scr_cnt > 4) {
+          
+          if (blast_cnt < 0) {
+            Serial.println("voted: prediction right swipe movement");
+          } else {
+            Serial.println("voted: prediction left swipe movement");
+          }
+          scr_cnt = 0;
+          blast_cnt = 0;
+        }
+        Serial.println(last);
       }
     }
-    // calculate data_f_start and data_r_end
-    for(j=0; j<12; ++j){
-      for(k=0; k<data_segments-2; k++){
-        if (diff_data[k*12 + j] < -Dth){
-          data_f_start[j] = k;
+  }
+
+  // Make better Dth by median 
+  // Dth = (int) quick_select(current, 12)/5;
+
+  // Calculate standard deviation
+  // sd = standard_dev(current);
+}
+
+// ---------------------------------------------------------
+// 
+int find_stable_segment(int arr[12]){
+  // return -1, if stable, else returns index of arr
+  // always of length 12 
+  int copy[12] = {0};
+  for (int i=0; i<12; i++){
+    copy[i] = arr[i];
+  }
+  float median = (float)quick_select(copy, 12);
+  int j;
+  median = median * drop_percentage;
+  for (int i=0; i<12; i++){
+    if (arr[i] < median){
+      j = i;
+      while (j < 11) {
+        if (arr[j+1] < arr[j]) {
+          j=j+1;
+        } else {
           break;
         }
       }
-      for(k=0; k<data_segments-2; k++){
-        if (diff_data[k*12 + j] > Dth){
-          data_r_end[j] = k;
-        }
-      }
-    }
-    // data_fall_start / rise_end diff sum
-    for (j=1; j<12; ++j){
-      data_fall_start += data_f_start[j] - data_f_start[j-1];
-      data_rise_end += data_r_end[j] - data_r_end[j-1];
-    }
-    // compare rest 
-    Serial.println(data_fall_start);
-    Serial.println(data_rise_end);
-    if (data_fall_start<0 && data_rise_end<0){
-      Serial.println("directiom guess: ");
-      Serial.print(" 0");
-      Serial.println(" ");
-    } else if (data_fall_start>0 && data_rise_end>0){
-      Serial.println("directiom guess: ");
-      Serial.print(" 1");
-      Serial.println(" ");
-    } else {
-      // No gesture was performed 
-      // Update DTH
-      Serial.println("No gesture performed, updating Dth");
-      //Dth = (int) median(data)/5;
-      //Serial.println(Dth);
-    }
-
-    
-
-    // Use standard deviation instead of divide by 3. 
-    // So if threshold is too high, we can print error message 
-    // use SD. 
-
-    // Make better Dth by median 
-    Dth = (int) quick_select(data, 2400)/5;
-
-    // Calculate standard deviation
-    sd = standard_dev(data);
-    
-    Serial.println(Dth);
-    Serial.println(sd);
-    // reinitiliaze everything to null & 0
-    data_fall_start = 0;
-    data_rise_end = 0;
-    for (j=0; j<12; ++j){
-      data_f_start[j] = 0;
-      data_r_end[j] = 0;
-    }
-    Serial.println("....reading again");
-  }
-}
-
-int median(int data[2400]){
-  int temp;
-  for(int i=0; i<2400; ++i){
-    for(int j=0; j<2400-i; ++j){
-      if (data[j] > data[j+1]){
-        temp = data[j];
-        data[j] = data[j+1];
-        data[j+1] = temp;
-      }
+      return j;
     }
   }
-  return data[1200];
+  return -1;
 }
 
-float standard_dev(int data[2400]){
+
+
+
+// ----------------------------------------------------------
+// Math functions 
+// ----------------------------------------------------------
+
+float standard_dev(int arr[], int n){
   float temp=0.0;
   float s=0.0;
-  for (int i=0; i<2400; ++i){
-    s += data[i];
+  for (int i=0; i<n; ++i){
+    s += arr[i];
   }
-  s = (float)s/(float)2400;
-  for (int i=0; i<2400; ++i){
-    temp += (data[i] - s)*(data[i]-s);
+  s = (float)s/(float)n;
+  for (int i=0; i<n; ++i){
+    temp += (arr[i] - s)*(arr[i]-s);
   }
-  temp = (float) temp / (float)2400;
+  temp = (float) temp / (float)n;
   //Serial.println("inside sd");
   //Serial.println(s);
   //Serial.println(temp);
@@ -274,9 +291,9 @@ int quick_select(int arr[], int n)
 
 #undef ELEM_SWAP
 
-// Flexible window
-// matural gesture 
-// Block cell different threshold 
-// finger - No hand - No phone 
+//* Flexible window
+//* natural gesture 
+//* Block cell different threshold 
+//* finger - No hand - No phone 
 // differentiate from tree / other inter
-// All types of swiping - middle to end-middle to middle 
+//* All types of swiping - middle to end-middle to middle 

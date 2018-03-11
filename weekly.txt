@@ -1,0 +1,38 @@
+2018 Feb 22
+
+
+//* Flexible window
+//* natural gesture 
+//* Block cell different threshold 
+//* finger - No hand - No phone 
+// differentiate from tree / other inter
+//* All types of swiping - middle to end-middle to middle 
+
+
+
+2018 Mar 1
+
+- Tradeoff between, fixed threshold, power / computation efficient 
+- SD to dynamic threshold. 
+- Constant force around rate CF radar algorithm CFAR. Theoritcal background. 
+- Sensing demo + harvesting demo 
+- Single finger for the watch! 
+- Study plan. Do a User Study. System “evaluation” study. Not useful, test robustness. Show numbers. What test cases may break our system. Like, indoor a,b,c; outdoor a,b,c. Learning condition, direction of light, noise, flickering, swipe speed, swipe distance, low light, flash interaction, sudden sun light changes,, sensing range, angle of light. Evaluation matrix, accuracy, latency, power consumption, continuous power consumption, diversity.
+
+
+sensitivity <-> accuracy by measuring how long it takes for an average person to perform gesture. 
+
+“Learning curve”. NO. 
+
+Dollar cell orientation & energy 
+
+Robust; *think more
+1. ambient light effect, distance, flicker, direction
+2. Down sampling data collection 
+
+Demo application. LP. 
+Multi touch demo. 
+
+2018 March 8 
+
+Temple Run on smart watch. 
