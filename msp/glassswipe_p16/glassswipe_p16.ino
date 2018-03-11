@@ -230,7 +230,7 @@ void loop() {
         //Serial.println(last);
       }
     }
-    sleep(32); // duty cycle low
+    delay(32); // duty cycle low
   }
 
   // Make better Dth by median 
