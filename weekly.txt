@@ -33,6 +33,16 @@ Robust; *think more
 Demo application. LP. 
 Multi touch demo. 
 
+—————————
 2018 March 8 
 
 Temple Run on smart watch. 
+
+—————————
+2018 March 11
+
+Next steps 
+-> remove reference voltage 
+-> transfer entire code Energia 16 cell -> CCS *tonight 
+-> switching NOT in main() -> separate
+-> low power mode transfer figure out

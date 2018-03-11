@@ -169,7 +169,7 @@ void loop() {
   current[ix] = analogRead(A1);
   //Serial.println("-----------");
   //Serial.println(ix);
-  //Serial.println(current[ix]);
+  Serial.println(current[ix]);
   
   
   if (ix == 15){

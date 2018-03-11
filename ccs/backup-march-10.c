@@ -1,0 +1,196 @@
+/* --COPYRIGHT--,BSD
+ * Copyright (c) 2017, Texas Instruments Incorporated
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * *  Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * *  Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * *  Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * --/COPYRIGHT--*/
+/*******************************************************************************
+ * MSP432 ADC14 -  Single Channel with External Reference
+ *
+ * Description: This very simple code example shows the use of an external
+ * reference for use in the ADC14 module. A single channel sample/conversion
+ * is setup on input A0 (P5.5) and the sample timer is used to continuously
+ * store the result in a local variable. The value coming in VREF+ (P5.6) is
+ * treated as the max value of the ADC and the value coming in VREF- (P5.7) is
+ * treated as the minimum value.
+ *
+ *                MSP432P401
+ *             ------------------
+ *         /|\|                  |
+ *          | |                  |
+ *          --|RST         P5.5  |<---- A0 In
+ *            |            P5.6  |<---- VREF+
+ *            |            P5.7  |<---- VREF-
+ *            |                  |
+ *
+ ******************************************************************************/
+/* DriverLib Includes */
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
+
+/* Standard Includes */
+#include <stdint.h>
+
+#include <string.h>
+
+volatile uint16_t adcResult;
+
+int i=0;
+
+int main(void)
+{
+    /* Halting WDT */
+    WDT_A_holdTimer();
+    Interrupt_enableSleepOnIsrExit();
+    
+    //![Simple ADC14 Configure]
+    /* Initializing ADC (MCLK/1/1) */
+    ADC14_enableModule();
+    ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_1,
+                     0);
+    
+    P3SEL0 |= ~BIT7;
+    P3DIR |= BIT7;
+    P3OUT = BIT7;
+    
+    // setup 1 p4.5
+    P4SEL0 != ~BIT5;
+    P4DIR |= BIT5;
+    P4OUT != BIT5; // set to 1 - HIGH
+    
+    // Multiplexer Enable p4.1
+    P4SEL0 |= ~BIT1;
+    P4DIR |= BIT1; // output pin -> set to 1
+    P4OUT |= ~BIT1; // set to 0 - to enable
+    
+    //s0,   s1,  s2,  s3
+    //4.4, 4.2, 4.6, 4.3
+    
+    P4SEL0 |= ~BIT4; // s0
+    P4DIR |= BIT4; // output pin -> set to 1
+    P4OUT |= ~BIT4; // select 0
+    
+    P4SEL0 |= ~BIT2; // s1
+    P4DIR |= BIT2;
+    P4OUT |= ~BIT2;
+    
+    P4SEL0 |= ~BIT6; // s2
+    P4DIR |= BIT6;
+    P4OUT |= ~BIT6;
+    
+    P4SEL0 |= ~BIT3; // s3
+    P4DIR |= BIT3;
+    P4OUT |= ~BIT3;
+    
+    P4OUT = BIT4 & ~BIT2 & ~BIT6 & ~BIT3 & ~BIT1 & BIT5; // select 0
+    
+    // 0 select. all s0-3 -> 0
+    
+    // input on P4.2 i.e. A11
+    
+    int timepass=0;
+    int txp;
+    for(txp=0; txp<10000; txp++){
+        timepass=1; // do nothing
+    }
+    
+    /* Configuring ADC Memory (ADC_MEM0 A0/A1) in repeat mode
+     * with use of external references */
+    ADC14_configureSingleSampleMode(ADC_MEM0, true);
+    ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_EXTPOS_VREFNEG_EXTNEG,
+                                    ADC_INPUT_A1, false);
+    
+    /* Setting up GPIO pins as analog inputs (and references) */
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5,
+                                               GPIO_PIN7 | GPIO_PIN6 | GPIO_PIN5 | GPIO_PIN4, GPIO_TERTIARY_MODULE_FUNCTION);
+    
+    /* Enabling sample timer in auto iteration mode and interrupts*/
+    ADC14_enableSampleTimer(ADC_AUTOMATIC_ITERATION);
+    ADC14_enableInterrupt(ADC_INT0);
+    
+    /* Enabling Interrupts */
+    Interrupt_enableInterrupt(INT_ADC14);
+    Interrupt_enableMaster();
+    
+    /* Triggering the start of the sample */
+    ADC14_enableConversion();
+    ADC14_toggleConversionTrigger();
+    //![Simple ADC14 Configure]
+    
+    
+    int i=0;
+    /* Going to sleep */
+    while (1)
+    {
+        //PCM_gotoLPM0();
+        P3OUT ^= 0x01;
+        //P4OUT ^= ~BIT1;
+        for (i=0; i< 10000; i++){
+            //do nothing
+        }
+        printf('here chk');
+    }
+    
+}
+
+/* This interrupt happens whenever a conversion has been completed and placed
+ * into ADC_MEM0. */
+void ADC14_IRQHandler(void)
+{
+    uint64_t status;
+    
+    status = ADC14_getEnabledInterruptStatus();
+    ADC14_clearInterruptFlag(status);
+    
+    if(status & ADC_INT0)
+    {
+        adcResult = ADC14_getResult(ADC_MEM0);
+        printf("check %d : %d \n", P4OUT, adcResult);
+    }
+    
+    P3OUT ^= BIT7;
+    //    if (i == 0) {
+    //        i=1;
+    //        P4OUT |= BIT1; // select 1
+    //        P4OUT |= ~BIT7; // select 0
+    //    } else if(i == 1) {
+    //        i=2;
+    //        P4OUT |= ~BIT1; // select 0
+    //        P4OUT |= BIT7; // select 1
+    //    } else if(i == 2) {
+    //        i=3;
+    //        P4OUT |= BIT1; // select 1
+    //        P4OUT |= BIT7; // select 1
+    //    } else if(i == 3) {
+    //        i=0;
+    //        P4OUT |= ~BIT1; // select 0
+    //        P4OUT |= ~BIT7; // select 0
+    //    }
+    
+    
+    
+}
