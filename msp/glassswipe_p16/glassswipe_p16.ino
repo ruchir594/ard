@@ -15,7 +15,7 @@ int data[1600] = {0};
 int supercount = 0;
 
 // Stable Region Tweaker
-float drop_percentage = 0.95; 
+float drop_percentage = 0.75; 
 
 // Swipe Count Reference
 int scr = -1;
@@ -169,7 +169,7 @@ void loop() {
   current[ix] = analogRead(A1);
   //Serial.println("-----------");
   //Serial.println(ix);
-  Serial.println(current[ix]);
+  //Serial.println(current[ix]);
   
   
   if (ix == 15){
@@ -196,17 +196,17 @@ void loop() {
       } else {
         // predict for subsequent segment
         if (temp_segment_blast < scr) {
-          Serial.println(scr);
-          Serial.println(temp_segment_blast);
-          last = "prediction left swipe movement";
+          //Serial.println(scr);
+          //Serial.println(temp_segment_blast);
+          //last = "prediction left swipe movement";
           scr_cnt += 1;
           blast_cnt += scr - temp_segment_blast;
           
         } 
         if (temp_segment_blast > scr) {
-          Serial.println(scr);
-          Serial.println(temp_segment_blast);
-          last = "prediction right swipe movement";
+          //Serial.println(scr);
+          //Serial.println(temp_segment_blast);
+          //last = "prediction right swipe movement";
           scr_cnt += 1;
           blast_cnt -= temp_segment_blast - scr;
         }
@@ -220,9 +220,9 @@ void loop() {
         if (scr_cnt > 4) {
           
           if (blast_cnt < 0) {
-            Serial.println("voted: prediction right swipe movement");
+            //Serial.println("voted: prediction right swipe movement");
           } else {
-            Serial.println("voted: prediction left swipe movement");
+            //Serial.println("voted: prediction left swipe movement");
           }
           scr_cnt = 0;
           blast_cnt = 0;

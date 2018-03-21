@@ -43,6 +43,52 @@ Temple Run on smart watch.
 
 Next steps 
 -> remove reference voltage 
--> transfer entire code Energia 16 cell -> CCS *tonight 
--> switching NOT in main() -> separate
+*-> transfer entire code Energia 16 cell -> CCS *tonight 
+*-> switching NOT in main() -> separate
 -> low power mode transfer figure out
+
+—————————
+2018 March 13
+
+Gesture set. Drawing. 
+Make Gesture. 
+> for glass
+> for watch 
+
+METHOD 
+
+CFAR 
+1. Swipe algorithm 
+2. Touch algorithm 
+3. Adaptive threshold 
+4. Power adaptive (-)
+
+—————————
+2018 March 15
+
+Related work
+> give, list of paper, related to our work 
+Background 
+Gesture set 
+
+Glasses
+1. one touch 
+2. Multi touch
+3. Swipe left
+4. Swipe right
+5. Pinch up
+6. Pinch down 
+
+Watch
+7. Swipe up
+8. Swipe down 
+9. Spatial Muti touch 
+10. Rotate 
+
+Demo Applications 
+Link prototype, to screen, figure playing temple run 
+
+- notes 
+
+3mw. 80uw. Sliding window algorithm for tracking fingers.
+Cell can’t simultaneously harvest + sense 
