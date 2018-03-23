@@ -19,4 +19,12 @@ class Descent(object):
 
     def median(self, a):
         a.sort()
-        return a[8]
+        return a[len(a)/2]
+
+    def auto_thresh(self, a):
+        b=[]
+        for e in a:
+            b.extend(e)
+        b.sort()
+        print len(b), b[1000], b[len(b)/2]
+        return b[len(b)/2]*0.85, b[len(b)/2]*0.10

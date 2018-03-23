@@ -13,7 +13,7 @@ class Gesture(object):
     def clearobj(self):
         self.m = 0
         self.y = []
-
+        
     def gd(self, data, threshold, control=5):
         i=0
         temp=-1
@@ -84,7 +84,7 @@ class Gesture(object):
                     else:
                         y.append(max(w1))
                 else:
-                    if i-last_i < 20:
+                    if y and i-last_i < 20:
                         y.pop()
                     y.append('m_'+str(max(k for k,v in Counter(w1).items() if v>1))+'_'+str(max(k for k,v in Counter(w2).items() if v>1)))
 
